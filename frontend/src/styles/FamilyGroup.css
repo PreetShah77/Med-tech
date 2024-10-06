@@ -1,0 +1,176 @@
+/* FamilyGroup.css */
+.family-group-container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  .title {
+    font-size: 2.2rem;
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+  
+  .group-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+  
+  .group-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-right: 15px;
+  }
+  
+  .group-form input {
+    padding: 10px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease-in-out;
+  }
+  
+  .group-form input:focus {
+    border-color: #1e88e5;
+    outline: none;
+  }
+  
+  .group-form button {
+    padding: 10px 20px;
+    background-color: #1e88e5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+  }
+  
+  .group-form button:hover {
+    background-color: #1565c0;
+  }
+  
+  .user-groups {
+    margin-top: 20px;
+  }
+  
+  .user-groups h3 {
+    font-size: 1.8rem;
+    color: #444;
+    margin-bottom: 15px;
+  }
+  
+  .group-item {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  .group-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .group-item h4 {
+    font-size: 1.6rem;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  .group-item p {
+    font-size: 1rem;
+    color: #666;
+  }
+  
+  .group-item button {
+    margin-top: 10px;
+    padding: 8px 15px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+  }
+  
+  .group-item button:hover {
+    background-color: #d32f2f;
+  }
+  
+  .invite-form {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+  }
+  
+  .invite-form input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  
+  .invite-form button {
+    padding: 10px 15px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  
+  .invite-form button:hover {
+    background-color: #388e3c;
+  }
+  
+  .group-members, .group-inventory {
+    margin-top: 20px;
+  }
+  
+  .group-members h3, .group-inventory h3 {
+    font-size: 1.6rem;
+    color: #444;
+    margin-bottom: 15px;
+  }
+  
+  .member-item, .medicine-item {
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease-in-out;
+  }
+  
+  .member-item:hover, .medicine-item:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .member-item span, .medicine-item span {
+    display: block;
+    font-size: 1rem;
+    color: #555;
+  }
+  
+  .error-message {
+    color: #d32f2f;
+    margin: 10px 0;
+    font-size: 1rem;
+    text-align: center;
+  }
+  

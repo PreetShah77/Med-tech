@@ -249,7 +249,7 @@ class PrescriptionInterpreter:
             print(f"Error generating Ayurvedic alternatives: {e}")
             return "Unable to suggest Ayurvedic alternatives. Please try again later."
 
-api_key = ""  # Replace with your actual API key
+api_key = "AIzaSyClCe9qvjGi28fI1318nd7z5OseDvc-624"  # Replace with your actual API key
 interpreter = PrescriptionInterpreter(api_key)
 health_advisor = HealthAdvisor(api_key)
 
@@ -519,6 +519,215 @@ def join_group():
 
 @app.route('/group-inventory', methods=['GET'])
 def get_group_inventory():
+    group_id = request.args.get('groupId')
+    if not group_id:
+        return jsonify({'error': 'Group ID is required'}), 400
+
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = """
+        SELECT m.* FROM medicines m
+        JOIN group_members gm ON m.userId = gm.user_id
+        WHERE gm.group_id = %s
+        """
+        cursor.execute(query, (group_id,))
+        medicines = cursor.fetchall()
+        return jsonify(medicines), 200
+    except Error as e:
+        return jsonify({'error': f'Failed to fetch group inventory: {str(e)}'}), 500
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+@app.route('/group-members', methods=['GET'])
+def get_group_members():
+       group_id = request.args.get('groupId')
+       if not group_id:
+           return jsonify({'error': 'Group ID is required'}), 400
+
+       connection = create_connection()
+       if connection is None:
+           return jsonify({'error': 'Database connection failed'}), 500
+
+       try:
+           cursor = connection.cursor(dictionary=True)
+           query = """
+           SELECT u.id, u.email, u.username
+           FROM users u
+           JOIN group_members gm ON u.id = gm.user_id
+           WHERE gm.group_id = %s
+           """
+           cursor.execute(query, (group_id,))
+           members = cursor.fetchall()
+           return jsonify(members), 200
+       except Error as e:
+           print(f"Database error in get_group_members: {str(e)}")
+           return jsonify({'error': f'Failed to fetch group members: {str(e)}'}), 500
+       except Exception as e:
+           print(f"Unexpected error in get_group_members: {str(e)}")
+           return jsonify({'error': 'An unexpected error occurred'}), 500
+       finally:
+           if connection and connection.is_connected():
+               cursor.close()
+               connection.close()
+
+@app.route('/leave-group', methods=['POST'])
+def leave_group():
+    data = request.json
+    group_id = data.get('groupId')
+    user_id = data.get('userId')
+
+    if not group_id or not user_id:
+        return jsonify({'error': 'Group ID and user ID are required'}), 400
+
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    try:
+        cursor = connection.cursor()
+        query = "DELETE FROM group_members WHERE group_id = %s AND user_id = %s"
+        cursor.execute(query, (group_id, user_id))
+        connection.commit()
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'User not found in the group'}), 404
+        return jsonify({'message': 'Left group successfully'}), 200
+    except Error as e:
+        return jsonify({'error': f'Failed to leave group: {str(e)}'}), 500
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+@app.route('/invite-member', methods=['POST'])
+def invite_member():
+    data = request.json
+    group_id = data.get('groupId')
+    inviter_id = data.get('inviterId')
+    invitee_email = data.get('inviteeEmail')
+
+    if not all([group_id, inviter_id, invitee_email]):
+        return jsonify({'error': 'Group ID, inviter ID, and invitee email are required'}), 400
+
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    try:
+        cursor = connection.cursor(dictionary=True)
+        
+        # Check if the inviter is in the group
+        cursor.execute("SELECT * FROM group_members WHERE group_id = %s AND user_id = %s", (group_id, inviter_id))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Inviter is not a member of the group'}), 403
+
+        # Create invitation
+        cursor.execute("INSERT INTO group_invitations (group_id, inviter_id, invitee_email) VALUES (%s, %s, %s)",
+                       (group_id, inviter_id, invitee_email))
+        invitation_id = cursor.lastrowid
+        connection.commit()
+
+        # In a real-world scenario, you would send an email to the invitee here
+
+        return jsonify({'message': 'Invitation sent successfully', 'invitationId': invitation_id}), 201
+    except Error as e:
+        return jsonify({'error': f'Failed to send invitation: {str(e)}'}), 500
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+@app.route('/pending-invitations', methods=['GET'])
+def get_pending_invitations():
+    user_email = request.args.get('userEmail')
+    if not user_email:
+        return jsonify({'error': 'User email is required'}), 400
+
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = """
+        SELECT 
+            gi.id,
+            gi.group_id,
+            fg.name as group_name,
+            gi.inviter_id,
+            u.email as inviter_email
+        FROM group_invitations gi
+        JOIN family_groups fg ON gi.group_id = fg.id
+        JOIN users u ON gi.inviter_id = u.id
+        WHERE gi.invitee_email = %s
+        """
+        cursor.execute(query, (user_email,))
+        invitations = cursor.fetchall()
+        return jsonify(invitations), 200
+    except Error as e:
+        print(f"Database error in get_pending_invitations: {str(e)}")
+        return jsonify({'error': f'Failed to fetch pending invitations: {str(e)}'}), 500
+    except Exception as e:
+        print(f"Unexpected error in get_pending_invitations: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+# Update the respond-invitation endpoint to include the user's email
+@app.route('/respond-invitation', methods=['POST'])
+def respond_invitation():
+    data = request.json
+    invitation_id = data.get('invitationId')
+    user_email = data.get('userEmail')
+    accept = data.get('accept')
+
+    if not all([invitation_id, user_email, accept is not None]):
+        return jsonify({'error': 'Invitation ID, user email, and response are required'}), 400
+
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    try:
+        cursor = connection.cursor(dictionary=True)
+        
+        # Fetch invitation details
+        cursor.execute("SELECT * FROM group_invitations WHERE id = %s", (invitation_id,))
+        invitation = cursor.fetchone()
+        if not invitation:
+            return jsonify({'error': 'Invitation not found'}), 404
+
+        if accept:
+            # Get user ID from email
+            cursor.execute("SELECT id FROM users WHERE email = %s", (user_email,))
+            user = cursor.fetchone()
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            
+            # Add user to group
+            cursor.execute("INSERT INTO group_members (group_id, user_id) VALUES (%s, %s)",
+                           (invitation['group_id'], user['id']))
+            
+        # Delete invitation
+        cursor.execute("DELETE FROM group_invitations WHERE id = %s", (invitation_id,))
+        
+        connection.commit()
+        return jsonify({'message': 'Invitation response processed successfully'}), 200
+    except Error as e:
+        return jsonify({'error': f'Failed to process invitation response: {str(e)}'}), 500
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+@app.route('/user-groups', methods=['GET'])
+def get_user_groups():
     user_id = request.args.get('userId')
     if not user_id:
         return jsonify({'error': 'User ID is required'}), 400
@@ -530,20 +739,21 @@ def get_group_inventory():
     try:
         cursor = connection.cursor(dictionary=True)
         query = """
-        SELECT m.* FROM medicines m
-        JOIN group_members gm ON m.userId = gm.user_id
-        JOIN group_members gm2 ON gm.group_id = gm2.group_id
-        WHERE gm2.user_id = %s
+        SELECT fg.id, fg.name, fg.created_by, 
+               (SELECT COUNT(*) FROM group_members WHERE group_id = fg.id) as member_count
+        FROM family_groups fg
+        JOIN group_members gm ON fg.id = gm.group_id
+        WHERE gm.user_id = %s
         """
         cursor.execute(query, (user_id,))
-        medicines = cursor.fetchall()
-        return jsonify(medicines), 200
+        groups = cursor.fetchall()
+        return jsonify(groups), 200
     except Error as e:
-        return jsonify({'error': f'Failed to fetch group inventory: {str(e)}'}), 500
+        return jsonify({'error': f'Failed to fetch user groups: {str(e)}'}), 500
     finally:
         if connection.is_connected():
             cursor.close()
             connection.close()
-    
+
 if __name__ == '__main__':
     app.run(debug=True, port=5050)

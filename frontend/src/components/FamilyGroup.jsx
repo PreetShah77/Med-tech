@@ -1,27 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from "@clerk/clerk-react";
 import axios from 'axios';
-// import '../styles/FamilyGroup.css';
+import '../styles/FamilyGroup.css';
 
 function FamilyGroup() {
   const { user } = useUser();
   const [groupName, setGroupName] = useState('');
   const [groupId, setGroupId] = useState('');
   const [groupInventory, setGroupInventory] = useState([]);
+  const [userGroups, setUserGroups] = useState([]);
+  const [groupMembers, setGroupMembers] = useState([]);
+  const [inviteeEmail, setInviteeEmail] = useState('');
+  const [pendingInvitations, setPendingInvitations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (user) {
-      fetchGroupInventory();
+      fetchUserGroups();
+      fetchPendingInvitations();
     }
   }, [user]);
 
-  const fetchGroupInventory = async () => {
+  const fetchUserGroups = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://localhost:5050/user-groups', {
+        params: { userId: user.id }
+      });
+      setUserGroups(response.data);
+    } catch (err) {
+      console.error('Failed to fetch user groups:', err);
+      setError('Failed to fetch user groups. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPendingInvitations = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://localhost:5050/pending-invitations', {
+        params: { userEmail: user.primaryEmailAddress.emailAddress }
+      });
+      setPendingInvitations(response.data);
+    } catch (err) {
+      console.error('Failed to fetch pending invitations:', err);
+      setError('Failed to fetch pending invitations. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchGroupMembers = async (groupId) => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://localhost:5050/group-members', {
+        params: { groupId }
+      });
+      setGroupMembers(response.data);
+    } catch (err) {
+      console.error('Failed to fetch group members:', err);
+      setError('Failed to fetch group members. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const fetchGroupInventory = async (groupId) => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:5050/group-inventory', {
-        params: { userId: user.id }
+        params: { groupId }
       });
       setGroupInventory(response.data);
     } catch (err) {
@@ -44,7 +94,7 @@ function FamilyGroup() {
       });
       setGroupName('');
       alert(`Group created successfully! Group ID: ${response.data.groupId}`);
-      fetchGroupInventory();
+      fetchUserGroups();
     } catch (err) {
       setError('Failed to create group');
     } finally {
@@ -64,7 +114,7 @@ function FamilyGroup() {
       });
       setGroupId('');
       alert('Joined group successfully!');
-      fetchGroupInventory();
+      fetchUserGroups();
     } catch (err) {
       setError('Failed to join group');
     } finally {
@@ -72,51 +122,159 @@ function FamilyGroup() {
     }
   };
 
+  const handleLeaveGroup = async (groupId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      await axios.post('http://localhost:5050/leave-group', {
+        groupId,
+        userId: user.id
+      });
+      alert('Left group successfully!');
+      fetchUserGroups();
+    } catch (err) {
+      setError('Failed to leave group');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInviteMember = async (groupId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      await axios.post('http://localhost:5050/invite-member', {
+        groupId,
+        inviterId: user.id,
+        inviteeEmail
+      });
+      setInviteeEmail('');
+      alert('Invitation sent successfully!');
+    } catch (err) {
+      setError('Failed to send invitation');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRespondInvitation = async (invitationId, accept) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      await axios.post('http://localhost:5050/respond-invitation', {
+        invitationId,
+        userEmail: user.primaryEmailAddress.emailAddress,
+        accept
+      });
+      alert(accept ? 'Invitation accepted!' : 'Invitation declined.');
+      fetchPendingInvitations();
+      fetchUserGroups();
+    } catch (err) {
+      setError('Failed to respond to invitation');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="family-group-container">
-      <h2 className="title">Family Group</h2>
+      <h2 className="title">Family Groups</h2>
       
-      <div className="group-actions">
-        <form onSubmit={handleCreateGroup} className="group-form">
-          <input
-            type="text"
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            placeholder="Enter group name"
-            required
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Creating...' : 'Create Group'}
-          </button>
-        </form>
-
-        <form onSubmit={handleJoinGroup} className="group-form">
-          <input
-            type="text"
-            value={groupId}
-            onChange={(e) => setGroupId(e.target.value)}
-            placeholder="Enter group ID"
-            required
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Joining...' : 'Join Group'}
-          </button>
-        </form>
-      </div>
-
       {error && <div className="error-message">{error}</div>}
 
-      <div className="group-inventory">
-        <h3>Group Inventory</h3>
-        {groupInventory.map((medicine) => (
-          <div key={medicine.id} className="medicine-item">
-            <span>{medicine.name}</span>
-            <span>Qty: {medicine.quantity}</span>
-            <span>Expires: {new Date(medicine.expiryDate).toLocaleDateString()}</span>
-            <span>Owner: {medicine.username}</span>
-          </div>
-        ))}
-      </div>
+      {pendingInvitations.length > 0 && (
+        <div className="pending-invitations">
+          <h3>Pending Invitations</h3>
+          {pendingInvitations.map((invitation) => (
+            <div key={invitation.id} className="invitation-item">
+              <p>{invitation.inviter_name} invited you to join {invitation.group_name}</p>
+              <button onClick={() => handleRespondInvitation(invitation.id, true)}>Accept</button>
+              <button onClick={() => handleRespondInvitation(invitation.id, false)}>Decline</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {userGroups.length === 0 ? (
+        <div className="group-actions">
+          <form onSubmit={handleCreateGroup} className="group-form">
+            <input
+              type="text"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Enter group name"
+              required
+            />
+            <button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create Group'}
+            </button>
+          </form>
+
+          <form onSubmit={handleJoinGroup} className="group-form">
+            <input
+              type="text"
+              value={groupId}
+              onChange={(e) => setGroupId(e.target.value)}
+              placeholder="Enter group ID"
+              required
+            />
+            <button type="submit" disabled={loading}>
+              {loading ? 'Joining...' : 'Join Group'}
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className="user-groups">
+          <h3>Your Groups</h3>
+          {userGroups.map((group) => (
+            <div key={group.id} className="group-item">
+              <h4>{group.name}</h4>
+              <p>Members: {group.member_count}</p>
+              <button onClick={() => fetchGroupMembers(group.id)}>View Members</button>
+              <button onClick={() => fetchGroupInventory(group.id)}>View Inventory</button>
+              <button onClick={() => handleLeaveGroup(group.id)}>Leave Group</button>
+              <div className="invite-form">
+                <input
+                  type="email"
+                  value={inviteeEmail}
+                  onChange={(e) => setInviteeEmail(e.target.value)}
+                  placeholder="Enter email to invite"
+                />
+                <button onClick={() => handleInviteMember(group.id)}>Invite Member</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {groupMembers.length > 0 && (
+        <div className="group-members">
+          <h3>Group Members</h3>
+          {groupMembers.map((member) => (
+            <div key={member.id} className="member-item">
+              <span>{member.username}</span>
+              <span>{member.email}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {groupInventory.length > 0 && (
+        <div className="group-inventory">
+          <h3>Group Inventory</h3>
+          {groupInventory.map((medicine) => (
+            <div key={medicine.id} className="medicine-item">
+              <span>{medicine.name}</span>
+              <span>Qty: {medicine.quantity}</span>
+              <span>Expires: {new Date(medicine.expiryDate).toLocaleDateString()}</span>
+              <span>Owner: {medicine.username}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
