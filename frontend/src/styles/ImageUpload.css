@@ -162,3 +162,41 @@ pre {
   background-color: #cccccc;
   cursor: not-allowed;
 }
+.formatted-prescription h4,
+.formatted-alternatives h4 {
+  margin-top: 15px;
+  margin-bottom: 5px;
+  color: #2e7d32;
+}
+
+.formatted-prescription p,
+.formatted-alternatives p {
+  margin: 5px 0;
+}
+
+.formatted-comparison .available {
+  color: #2e7d32;
+}
+
+.formatted-comparison .not-available {
+  color: #c62828;
+}
+.image-caption {
+  margin-top: 4px;
+  font-size: 0.9em;
+  color: #666;
+  font-style: italic;
+}
+
+.image-preview {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.dialog-content {
+  padding: 1rem;
+}

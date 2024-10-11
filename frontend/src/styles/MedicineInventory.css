@@ -118,3 +118,31 @@
     font-weight: bold;
     margin-left: 10px;
   }
+  .medicine-info {
+    flex: 1;
+  }
+  
+  .medicine-description {
+    font-size: 0.9em;
+    color: #666;
+    margin: 5px 0;
+  }
+  
+  .medicine-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .edit-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .edit-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+  }

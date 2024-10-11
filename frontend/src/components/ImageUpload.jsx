@@ -51,8 +51,8 @@ function ImageUpload() {
         setWarning(response.data.warning);
       } else if (response.data.prescription_interpretation && response.data.inventory_comparison) {
         setResult({
-          prescription: response.data.prescription_interpretation,
-          comparison: response.data.inventory_comparison
+          prescription: formatPrescription(response.data.prescription_interpretation),
+          comparison: formatInventoryComparison(response.data.inventory_comparison)
         });
       } else {
         setError('Unexpected response format from server');
@@ -73,13 +73,60 @@ function ImageUpload() {
       const response = await axios.post('http://localhost:5050/suggest_ayurvedic', {
         prescription: result.prescription
       });
-      setAyurvedicAlternatives(response.data.ayurvedic_alternatives);
+      setAyurvedicAlternatives(formatAyurvedicAlternatives(response.data.ayurvedic_alternatives));
     } catch (error) {
       console.error('Error fetching ayurvedic alternatives:', error);
       setError('Failed to fetch ayurvedic alternatives');
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatPrescription = (prescription) => {
+    const lines = prescription.split('\n');
+    return (
+      <div className="formatted-prescription">
+        {lines.map((line, index) => {
+          if (line.trim().endsWith(':')) {
+            return <h4 key={index}>{line}</h4>;
+          } else {
+            return <p key={index}>{line}</p>;
+          }
+        })}
+      </div>
+    );
+  };
+
+  const formatInventoryComparison = (comparison) => {
+    const lines = comparison.split('\n');
+    return (
+      <div className="formatted-comparison">
+        {lines.map((line, index) => {
+          if (line.trim().startsWith('Available:')) {
+            return <p key={index} className="available">{line}</p>;
+          } else if (line.trim().startsWith('Not Available:')) {
+            return <p key={index} className="not-available">{line}</p>;
+          } else {
+            return <p key={index}>{line}</p>;
+          }
+        })}
+      </div>
+    );
+  };
+
+  const formatAyurvedicAlternatives = (alternatives) => {
+    const lines = alternatives.split('\n');
+    return (
+      <div className="formatted-alternatives">
+        {lines.map((line, index) => {
+          if (line.trim().endsWith(':')) {
+            return <h4 key={index}>{line}</h4>;
+          } else {
+            return <p key={index}>{line}</p>;
+          }
+        })}
+      </div>
+    );
   };
 
   return (
@@ -111,11 +158,11 @@ function ImageUpload() {
         <div className="result-section">
           <div className="result-column">
             <h3>Prescription Interpretation</h3>
-            <pre>{result.prescription}</pre>
+            {result.prescription}
           </div>
           <div className="result-column">
             <h3>Inventory Comparison</h3>
-            <pre>{result.comparison}</pre>
+            {result.comparison}
           </div>
           <div className="result-column">
             <h3>Ayurvedic Alternatives</h3>
@@ -124,9 +171,7 @@ function ImageUpload() {
                 {loading ? 'Fetching...' : 'Suggest Ayurvedic Alternatives'}
               </button>
             )}
-            {ayurvedicAlternatives && (
-              <pre>{ayurvedicAlternatives}</pre>
-            )}
+            {ayurvedicAlternatives && ayurvedicAlternatives}
           </div>
         </div>
       )}

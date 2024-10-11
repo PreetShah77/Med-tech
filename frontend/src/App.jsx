@@ -1,12 +1,14 @@
 import '../src/styles/App.css';
-import { MessageCircle, X, Send } from 'lucide-react';
+import { MessageCircle, X, Send, ImagePlus } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 
-const ChatBot = () => {
+const App = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const toggleChat = () => setIsOpen(!isOpen);
 
@@ -16,10 +18,59 @@ const ChatBot = () => {
 
   useEffect(scrollToBottom, [messages]);
 
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, or WebP)');
+      return;
+    }
+
+    setIsLoading(true);
+    const newMessages = [...messages, { 
+      type: 'image',
+      sender: 'user',
+      imageUrl: URL.createObjectURL(file)
+    }];
+    setMessages(newMessages);
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await fetch('http://localhost:5050/analyze-health-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Network response was not ok');
+
+      const data = await response.json();
+      setMessages([...newMessages, {
+        type: 'text',
+        sender: 'bot',
+        text: data.analysis,
+        recommendations: data.recommendations,
+        urgency: data.urgency
+      }]);
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages([...newMessages, { 
+        type: 'text',
+        sender: 'bot',
+        text: 'Sorry, I encountered an error analyzing the image. Please try again.'
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const sendMessage = async () => {
     if (input.trim() === '') return;
 
-    const newMessages = [...messages, { text: input, sender: 'user' }];
+    const newMessages = [...messages, { type: 'text', text: input, sender: 'user' }];
     setMessages(newMessages);
     setInput('');
 
@@ -36,16 +87,55 @@ const ChatBot = () => {
       if (!response.ok) throw new Error('Network response was not ok');
 
       const data = await response.json();
-      const botMessage = {
+      setMessages([...newMessages, { 
+        type: 'text',
         text: data.response,
         sender: 'bot',
         citations: data.citations || []
-      };
-      setMessages([...newMessages, botMessage]);
+      }]);
     } catch (error) {
       console.error('Error:', error);
-      setMessages([...newMessages, { text: 'Sorry, I encountered an error. Please try again.', sender: 'bot' }]);
+      setMessages([...newMessages, { 
+        type: 'text',
+        text: 'Sorry, I encountered an error. Please try again.',
+        sender: 'bot'
+      }]);
     }
+  };
+
+  const renderMessage = (msg, index) => {
+    const messageClass = msg.sender === 'user' ? 'user-message' : 'bot-message';
+    
+    return (
+      <div key={index} className={`message ${messageClass}`}>
+        {msg.type === 'image' ? (
+          <div className="image-message">
+            <img src={msg.imageUrl} alt="Uploaded health condition" />
+          </div>
+        ) : (
+          <div className="text-message">
+            <div className="message-text">{msg.text}</div>
+            {msg.recommendations && (
+              <div className="recommendations">
+                <h4>Recommendations:</h4>
+                <ul>
+                  {msg.recommendations.map((rec, idx) => (
+                    <li key={idx} className={`urgency-${msg.urgency}`}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {msg.citations?.map((citation, citIndex) => (
+              <div key={citIndex} className="citation">
+                <a href={citation.url} target="_blank" rel="noopener noreferrer">
+                  [{citIndex + 1}] {citation.title}
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -62,16 +152,12 @@ const ChatBot = () => {
             </button>
           </div>
           <div className="chatbot-messages">
-            {messages.map((msg, index) => (
-              <div key={index} className={`message ${msg.sender === 'user' ? 'user-message' : 'bot-message'}`}>
-                {msg.text}
-                {msg.citations && msg.citations.map((citation, citIndex) => (
-                  <div key={citIndex} className="citation">
-                    <a href={citation.url} target="_blank" rel="noopener noreferrer">[{citIndex + 1}] {citation.title}</a>
-                  </div>
-                ))}
+            {messages.map((msg, index) => renderMessage(msg, index))}
+            {isLoading && (
+              <div className="message bot-message">
+                <div className="loading-spinner">Analyzing image...</div>
               </div>
-            ))}
+            )}
             <div ref={messagesEndRef} />
           </div>
           <div className="chatbot-input">
@@ -82,6 +168,19 @@ const ChatBot = () => {
               onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
               placeholder="Type your message..."
             />
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
+            <button 
+              className="upload-button"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <ImagePlus size={20} />
+            </button>
             <button onClick={sendMessage}>
               <Send size={20} />
             </button>
@@ -91,48 +190,5 @@ const ChatBot = () => {
     </div>
   );
 };
-
-function App() {
-  return (
-    <div className="App">
-      <ChatBot />
-      <main>
-        <section className="hero animate-slide-up">
-          <h2>Your Personal Health Assistant</h2>
-          <p>Manage your health with ease using AI-powered recommendations and tracking</p>
-          <button className="cta-button pulse">Get Started</button>
-        </section>
-        <section className="features">
-          <h3 className="animate-fade-in">Key Features</h3>
-          <div className="feature-grid">
-            <div className="feature-item animate-pop-in">
-              <i className="fas fa-pills"></i>
-              <h4>Medicine Suggestions</h4>
-              <p>Get personalized medicine recommendations based on your symptoms</p>
-            </div>
-            <div className="feature-item animate-pop-in">
-              <i className="fas fa-heartbeat"></i>
-              <h4>Lifestyle Recommendations</h4>
-              <p>Receive tailored lifestyle and diet suggestions for better health</p>
-            </div>
-            <div className="feature-item animate-pop-in">
-              <i className="fas fa-clipboard-list"></i>
-              <h4>Medicine Tracking</h4>
-              <p>Keep track of your medicines, including expiry dates and dosage</p>
-            </div>
-            <div className="feature-item animate-pop-in">
-              <i className="fas fa-chart-line"></i>
-              <h4>Health Analytics</h4>
-              <p>View insights and analytics about your health and medicine usage</p>
-            </div>
-          </div>
-        </section>
-      </main>
-      <footer className="animate-fade-in">
-        <p>&copy; 2024 Health Synce. All rights reserved.</p>
-      </footer>
-    </div>
-  );
-}
 
 export default App;

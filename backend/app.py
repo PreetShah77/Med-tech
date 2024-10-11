@@ -1,3 +1,4 @@
+
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -7,7 +8,16 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
 import re
-
+import requests
+from bs4 import BeautifulSoup
+import json
+from concurrent.futures import ThreadPoolExecutor
+import re
+from urllib.parse import quote
+import time
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+import bcrypt
 
 app = Flask(__name__)
 CORS(app)
@@ -31,6 +41,46 @@ def create_connection():
     except Error as e:
         print(f"Error connecting to MySQL: {e}")
         return None
+    
+@app.route('/register', methods=['POST'])
+def register_user():
+    data = request.json
+    user_id = data.get('id')
+    email = data.get('email')
+    phone_number = data.get('phoneNumber')
+    password = data.get('password')
+
+    if not all([user_id, email, phone_number, password]):
+        return jsonify({'error': 'All fields are required'}), 400
+
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    try:
+        cursor = connection.cursor()
+
+        # Check if user already exists
+        cursor.execute("SELECT * FROM users WHERE id = %s OR email = %s OR phone_number = %s", 
+                       (user_id, email, phone_number))
+        if cursor.fetchone():
+            return jsonify({'error': 'User already exists'}), 409
+
+        # Hash the password
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        # Insert new user
+        query = "INSERT INTO users (id, email, phone_number, password_hash) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (user_id, email, phone_number, hashed_password))
+        connection.commit()
+
+        return jsonify({'message': 'User registered successfully'}), 201
+    except Error as e:
+        return jsonify({'error': f'Failed to register user: {str(e)}'}), 500
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
     
 class HealthAdvisor:
     def __init__(self, api_key):
@@ -253,6 +303,123 @@ api_key = "AIzaSyClCe9qvjGi28fI1318nd7z5OseDvc-624"  # Replace with your actual 
 interpreter = PrescriptionInterpreter(api_key)
 health_advisor = HealthAdvisor(api_key)
 
+from PIL import Image
+import io
+import base64
+
+class HealthImageAnalyzer:
+    def __init__(self, api_key):
+        genai.configure(api_key=api_key)
+        
+        generation_config = {
+            "temperature": 0.3,
+            "top_p": 1,
+            "top_k": 32,
+            "max_output_tokens": 4096,
+        }
+        
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+        ]
+        
+        self.model = genai.GenerativeModel(
+            model_name="gemini-1.5-pro",
+            generation_config=generation_config,
+            safety_settings=safety_settings
+        )
+
+    def analyze_image(self, image, caption=""):
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+            
+        prompt = f"""
+        Analyze this medical image with the following context/description:
+        {caption if caption else "No description provided"}
+        
+        Provide:
+        1. A comprehensive analysis considering both the image and the provided context
+        2. Potential conditions or issues identified
+        3. Recommended immediate actions
+        4. Urgency level (low/medium/high)
+        5. Whether immediate medical attention is needed
+        
+        Format the response as JSON with the following structure:
+        {{
+            "analysis": "detailed analysis of the condition",
+            "recommendations": ["list", "of", "recommendations"],
+            "urgency": "low/medium/high",
+            "seek_medical_attention": true/false
+        }}
+        """
+        
+        try:
+            response = self.model.generate_content([image, prompt])
+            result = response.text
+            return self.parse_response(result)
+        except Exception as e:
+            print(f"Error analyzing image: {e}")
+            return {
+                "analysis": "Unable to analyze the image. Please ensure the image is clear and try again.",
+                "recommendations": ["Please try uploading a clearer image"],
+                "urgency": "unknown",
+                "seek_medical_attention": False
+            }
+
+    def parse_response(self, response):
+        try:
+            # Clean up the response and parse JSON
+            cleaned_response = response.strip()
+            if not cleaned_response.startswith('{'):
+                cleaned_response = cleaned_response[cleaned_response.find('{'):]
+            if not cleaned_response.endswith('}'):
+                cleaned_response = cleaned_response[:cleaned_response.rfind('}')+1]
+            
+            result = json.loads(cleaned_response)
+            return result
+        except Exception as e:
+            print(f"Error parsing response: {e}")
+            return {
+                "analysis": response,
+                "recommendations": ["Please consult with a healthcare professional"],
+                "urgency": "unknown",
+                "seek_medical_attention": False
+            }
+
+@app.route('/analyze-health-image', methods=['POST'])
+def analyze_health_image():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image file provided'}), 400
+    
+    image_file = request.files['image']
+    caption = request.form.get('caption', '')
+    
+    try:
+        image = Image.open(image_file)
+        analyzer = HealthImageAnalyzer(api_key)
+        result = analyzer.analyze_image(image, caption)
+        
+        return jsonify(result), 200
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        return jsonify({
+            'error': 'Failed to process image',
+            'details': str(e)
+        }), 500
 @app.route('/interpret', methods=['POST'])
 def interpret_prescription():
     print("Received request for prescription interpretation")
@@ -316,7 +483,204 @@ def interpret_prescription():
         return jsonify({'error': f'Error during interpretation: {str(e)}'}), 500
 
 
+class MedicineInfoScraper:
+    def __init__(self, api_key):
+        self.session = requests.Session()
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504]
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        })
+        
+        # Initialize Gemini model
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel(model_name="gemini-1.5-pro")
 
+    def _scrape_drugs_com(self, medicine_name):
+        try:
+            search_url = f"https://www.drugs.com/{quote(medicine_name.lower())}.html"
+            response = self.session.get(search_url, timeout=10)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            content = soup.find('div', class_='contentBox')
+            if content:
+                # Extract all text from the content div
+                full_text = content.get_text(strip=True, separator=' ')
+                return full_text
+            
+            # If direct URL fails, try the search page
+            search_url = f"https://www.drugs.com/search.php?searchterm={quote(medicine_name)}"
+            response = self.session.get(search_url, timeout=10)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            result = soup.find('div', class_='ddc-media-list')
+            if result:
+                full_text = result.get_text(strip=True, separator=' ')
+                return full_text
+            
+            return None
+        except Exception as e:
+            print(f"Error scraping drugs.com: {e}")
+            return None
+
+    def _query_rxnav_api(self, medicine_name):
+        try:
+            # First get the RxCUI
+            url = f"https://rxnav.nlm.nih.gov/REST/rxcui.json?name={quote(medicine_name)}"
+            response = self.session.get(url, timeout=10)
+            data = response.json()
+            
+            if 'idGroup' in data and 'rxnormId' in data['idGroup']:
+                rxcui = data['idGroup']['rxnormId'][0]
+                
+                # Get drug information using RxClass API
+                info_url = f"https://rxnav.nlm.nih.gov/REST/rxclass/class/byRxcui.json?rxcui={rxcui}"
+                info_response = self.session.get(info_url, timeout=10)
+                info_data = info_response.json()
+                
+                if 'rxclassMinConceptList' in info_data:
+                    concepts = info_data['rxclassMinConceptList']
+                    if concepts:
+                        # Combine class names and descriptions
+                        descriptions = []
+                        for concept in concepts:
+                            if 'className' in concept:
+                                descriptions.append(f"{concept['className']}")
+                        if descriptions:
+                            return f"{medicine_name} belongs to: {', '.join(descriptions)}. "
+            return None
+        except Exception as e:
+            print(f"Error querying RxNav API: {e}")
+            return None
+
+    def summarize_with_gemini(self, text):
+        if not text:
+            return None
+        
+        prompt = f"""
+        Summarize the following information about a medicine. Include key details such as:
+        - What the medicine is used for
+        - How it works
+        - Common side effects
+        - Important warnings or precautions
+        - Dosage information (if available)
+
+        Keep the summary concise but informative, around 200-300 words.
+
+        Medicine Information:
+        {text}
+        """
+
+        try:
+            response = self.model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            print(f"Error summarizing with Gemini: {e}")
+            return None
+
+    def get_medicine_description(self, medicine_name):
+        description_parts = []
+        
+        drugs_com_desc = self._scrape_drugs_com(medicine_name)
+        if drugs_com_desc:
+            description_parts.append(drugs_com_desc)
+            
+        rxnav_desc = self._query_rxnav_api(medicine_name)
+        if rxnav_desc:
+            description_parts.append(rxnav_desc)
+            
+        if description_parts:
+            combined_desc = ' '.join(description_parts)
+            summarized_desc = self.summarize_with_gemini(combined_desc)
+            return summarized_desc if summarized_desc else combined_desc
+        
+        return f"{medicine_name} - Please consult a healthcare professional for detailed information about this medication."
+
+# Update the global instance of the scraper
+medicine_scraper = MedicineInfoScraper(api_key)
+
+# Modify your add_medicine route to use the new scraper
+@app.route('/medicines', methods=['POST'])
+def add_medicine():
+    data = request.form
+    required_fields = ['name', 'quantity', 'expiryDate', 'userId', 'userEmail', 'username']
+    
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    try:
+        # Use the new scraper to get medicine description
+        description = medicine_scraper.get_medicine_description(data['name'])
+
+        cursor = connection.cursor()
+        query = """
+        INSERT INTO medicines (name, quantity, expiryDate, userId, userEmail, username, description)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        values = (data['name'], data['quantity'], data['expiryDate'],
+                 data['userId'], data['userEmail'], data['username'], description)
+        cursor.execute(query, values)
+        connection.commit()
+        return jsonify({
+            'message': 'Medicine added successfully',
+            'id': cursor.lastrowid,
+            'description': description
+        }), 201
+    except Error as e:
+        return jsonify({'error': f'Failed to add medicine: {str(e)}'}), 500
+    finally:
+        print(description)
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+# Add a route to manually refresh a medicine's description
+@app.route('/medicines/<int:medicine_id>/refresh-description', methods=['POST'])
+def refresh_medicine_description(medicine_id):
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    try:
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get the medicine name
+        cursor.execute("SELECT name FROM medicines WHERE id = %s", (medicine_id,))
+        medicine = cursor.fetchone()
+        
+        if not medicine:
+            return jsonify({'error': 'Medicine not found'}), 404
+        
+        # Get new description
+        new_description = medicine_scraper.get_medicine_description(medicine['name'])
+        
+        # Update the description
+        cursor.execute(
+            "UPDATE medicines SET description = %s WHERE id = %s",
+            (new_description, medicine_id)
+        )
+        connection.commit()
+        
+        return jsonify({
+            'message': 'Description updated successfully',
+            'description': new_description
+        }), 200
+    except Error as e:
+        return jsonify({'error': f'Failed to refresh description: {str(e)}'}), 500
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 @app.route('/medicines', methods=['GET'])
 def get_medicines():
     user_id = request.args.get('userId')
@@ -340,14 +704,9 @@ def get_medicines():
             cursor.close()
             connection.close()
 
-@app.route('/medicines', methods=['POST'])
-def add_medicine():
-    data = request.form
-    required_fields = ['name', 'quantity', 'expiryDate', 'userId', 'userEmail', 'username']
-    
-    if not all(field in data for field in required_fields):
-        return jsonify({'error': 'Missing required fields'}), 400
-
+@app.route('/medicines/<int:medicine_id>', methods=['PUT'])
+def update_medicine(medicine_id):
+    data = request.json
     connection = create_connection()
     if connection is None:
         return jsonify({'error': 'Database connection failed'}), 500
@@ -355,16 +714,17 @@ def add_medicine():
     try:
         cursor = connection.cursor()
         query = """
-        INSERT INTO medicines (name, quantity, expiryDate, userId, userEmail, username)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        UPDATE medicines 
+        SET quantity = %s, expiryDate = %s
+        WHERE id = %s
         """
-        values = (data['name'], data['quantity'], data['expiryDate'],
-                  data['userId'], data['userEmail'], data['username'])
-        cursor.execute(query, values)
+        cursor.execute(query, (data['quantity'], data['expiryDate'], medicine_id))
         connection.commit()
-        return jsonify({'message': 'Medicine added successfully', 'id': cursor.lastrowid}), 201
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Medicine not found'}), 404
+        return jsonify({'message': 'Medicine updated successfully'}), 200
     except Error as e:
-        return jsonify({'error': f'Failed to add medicine: {str(e)}'}), 500
+        return jsonify({'error': f'Failed to update medicine: {str(e)}'}), 500
     finally:
         if connection.is_connected():
             cursor.close()
@@ -391,6 +751,83 @@ def delete_medicine(medicine_id):
             cursor.close()
             connection.close()
 
+@app.route('/search-medicines', methods=['GET'])
+def search_medicines():
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-1.5-pro')
+    user_id = request.args.get('userId')
+    query = request.args.get('query')
+
+    if not user_id or not query:
+        return jsonify({'error': 'User ID and search query are required'}), 400
+
+    connection = None
+    cursor = None
+
+    try:
+        # Use Gemini to interpret the search query
+        prompt = f"""
+        Interpret the following search query for a medicine inventory:
+        "{query}"
+        
+        Provide a JSON response with the following structure:
+        {{
+            "name_keywords": ["list", "of", "keywords"],
+            "description_keywords": ["list", "of", "keywords"]
+        }}
+        
+        The name_keywords should be specific medicine names or types,
+        while description_keywords should be symptoms or conditions.
+        """
+        
+        response = model.generate_content(prompt)
+        print(f"Raw Gemini response: {response.text}")  # Debug print
+        
+        try:
+            # Remove Markdown code block syntax if present
+            json_str = response.text.strip('`').strip()
+            if json_str.startswith('json'):
+                json_str = json_str[4:].strip()
+            interpretation = json.loads(json_str)
+        except json.JSONDecodeError as json_error:
+            print(f"JSON decode error: {json_error}")
+            # Fallback to a simple keyword extraction
+            keywords = query.lower().split()
+            interpretation = {
+                "name_keywords": keywords,
+                "description_keywords": keywords
+            }
+
+        # Construct SQL query based on the interpretation
+        sql_query = """
+        SELECT * FROM medicines 
+        WHERE userId = %s AND (
+            LOWER(name) REGEXP %s
+            OR LOWER(description) REGEXP %s
+        )
+        """
+        
+        name_pattern = '|'.join(interpretation['name_keywords'])
+        desc_pattern = '|'.join(interpretation['description_keywords'])
+        
+        connection = create_connection()
+        if connection is None:
+            return jsonify({'error': 'Database connection failed'}), 500
+
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(sql_query, (user_id, name_pattern, desc_pattern))
+        results = cursor.fetchall()
+        print(results)
+        return jsonify(results), 200
+
+    except Exception as e:
+        print(f"Error in search_medicines: {str(e)}")
+        return jsonify({'error': f'Failed to process search query: {str(e)}'}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 @app.route('/suggest_ayurvedic', methods=['POST'])
 def suggest_ayurvedic():
     data = request.json
@@ -557,14 +994,16 @@ def get_group_members():
        try:
            cursor = connection.cursor(dictionary=True)
            query = """
-           SELECT u.id, u.email, u.username
+           SELECT u.id, u.email
            FROM users u
            JOIN group_members gm ON u.id = gm.user_id
            WHERE gm.group_id = %s
            """
            cursor.execute(query, (group_id,))
            members = cursor.fetchall()
+           print(members)
            return jsonify(members), 200
+       
        except Error as e:
            print(f"Database error in get_group_members: {str(e)}")
            return jsonify({'error': f'Failed to fetch group members: {str(e)}'}), 500

@@ -2,12 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { SignedIn, SignedOut, UserButton, useClerk, useUser } from "@clerk/clerk-react";
 import "../styles/Header.css";
 import { Link, useNavigate } from "react-router-dom";
+import axios from 'axios';
 
 function SignUpButton() {
   const clerk = useClerk();
+  const navigate = useNavigate();
+
+  const handleSignUp = async () => {
+    try {
+      const result = await clerk.openSignUp({});
+      if (result.createdSessionId) {
+        const { id, emailAddresses, phoneNumbers } = result.createdUserId;
+        const email = emailAddresses[0].emailAddress;
+        const phoneNumber = phoneNumbers[0]?.phoneNumber || '';
+        const password = 'defaultPassword'; // Handle this securely
+
+        // Register user in your backend
+        await axios.post('http://localhost:5050/register', {
+          id,
+          email,
+          phoneNumber,
+          password
+        });
+
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error during sign up:', error);
+    }
+  };
 
   return (
-    <button className="sign-up-btn" onClick={() => clerk.openSignUp({})}>
+    <button className="sign-up-btn" onClick={handleSignUp}>
       Sign up
     </button>
   );
@@ -31,7 +57,7 @@ function Header() {
   useEffect(() => {
     if (user) {
       const email = user.primaryEmailAddress.emailAddress;
-      const authMethods = user.externalAccounts; // Get external accounts like Google
+      const authMethods = user.externalAccounts;
 
       // Check if user logged in via Google
       const loggedInWithGoogle = authMethods.some(account => account.provider === 'google');
@@ -97,8 +123,8 @@ function Header() {
                 </li>
                 <li></li>
                 <li>
-              <UserButton className="user-button" afterSignOutUrl="/" />
-            </li>
+                  <UserButton className="user-button" afterSignOutUrl="/" />
+                </li>
               </>
             ) : (
               <>
@@ -125,7 +151,7 @@ function Header() {
                 </li>
                 <li></li>
                 <li>
-                <UserButton className="user-button" afterSignOutUrl="/" />
+                  <UserButton className="user-button" afterSignOutUrl="/" />
                 </li>
               </>
             )}
