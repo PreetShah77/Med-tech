@@ -62,35 +62,18 @@ function Header() {
       // Check if user logged in via Google
       const loggedInWithGoogle = authMethods.some(account => account.provider === 'google');
 
-      if (loggedInWithGoogle) {
-        // Register or update user in your backend when logged in with Google
-        const handleGoogleLogin = async () => {
-          try {
-            const { id, primaryEmailAddress, phoneNumbers } = user;
-            const email = primaryEmailAddress.emailAddress;
-            const phoneNumber = phoneNumbers[0]?.phoneNumber || '';
-            const password = '';  // Since Google login doesn't use password
-
-            // Send data to your backend to register the user
-            await axios.post('http://localhost:5050/register', {
-              id,
-              email,
-              phoneNumber,
-              password
-            });
-          } catch (error) {
-            console.error('Error during Google login registration:', error);
-          }
-        };
-
-        handleGoogleLogin();
-      } else {
+      if (!loggedInWithGoogle) {
         const adminEmail = "preetashah21@gnu.ac.in";
+        const adminPassword = "qweasd123../";
+
         if (email === adminEmail) {
+          console.log("proper");
           setIsAdmin(true);
         } else {
           setIsAdmin(false);
         }
+      } else {
+        setIsAdmin(false);
       }
     }
   }, [user]);
