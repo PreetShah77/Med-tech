@@ -8,7 +8,7 @@ function ImageUpload() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [warning, setWarning] = useState(null);
+  const [warnings, setWarnings] = useState([]);
   const [ayurvedicAlternatives, setAyurvedicAlternatives] = useState(null);
   const { user } = useUser();
 
@@ -16,7 +16,7 @@ function ImageUpload() {
     setFile(e.target.files[0]);
     setResult(null);
     setError(null);
-    setWarning(null);
+    setWarnings([]);
     setAyurvedicAlternatives(null);
   };
 
@@ -27,7 +27,7 @@ function ImageUpload() {
     setLoading(true);
     setResult(null);
     setError(null);
-    setWarning(null);
+    setWarnings([]);
     setAyurvedicAlternatives(null);
 
     const formData = new FormData();
@@ -37,23 +37,21 @@ function ImageUpload() {
     formData.append('username', user.fullName);
 
     try {
-      console.log('Sending request to server...');
       const response = await axios.post('http://localhost:5050/interpret', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 30000 // 30 seconds timeout
       });
       
-      console.log("Response data:", response.data);
-
       if (response.data.error) {
         setError(response.data.error);
-      } else if (response.data.warning) {
-        setWarning(response.data.warning);
       } else if (response.data.prescription_interpretation && response.data.inventory_comparison) {
         setResult({
           prescription: formatPrescription(response.data.prescription_interpretation),
           comparison: formatInventoryComparison(response.data.inventory_comparison)
         });
+        if (response.data.warnings && response.data.warnings.length > 0) {
+          setWarnings(response.data.warnings);
+        }
       } else {
         setError('Unexpected response format from server');
       }
@@ -64,6 +62,8 @@ function ImageUpload() {
       setLoading(false);
     }
   };
+
+
 
   const fetchAyurvedicAlternatives = async () => {
     if (!result || !result.prescription) return;
@@ -89,6 +89,8 @@ function ImageUpload() {
         {lines.map((line, index) => {
           if (line.trim().endsWith(':')) {
             return <h4 key={index}>{line}</h4>;
+          } else if (line.includes('Dosage:') || line.includes('Instructions:')) {
+            return <p key={index} className="dosage-info">{line}</p>;
           } else {
             return <p key={index}>{line}</p>;
           }
@@ -96,6 +98,7 @@ function ImageUpload() {
       </div>
     );
   };
+
 
   const formatInventoryComparison = (comparison) => {
     const lines = comparison.split('\n');
@@ -145,11 +148,12 @@ function ImageUpload() {
         {file && <p className="file-name">{file.name}</p>}
         
         {error && <div className="message error">{error}</div>}
-        {warning && (
+        {warnings.length > 0 && (
           <div className="message warning">
-            <h3>Warning: Content Blocked</h3>
-            <p>{warning}</p>
-            <p>The AI model couldn't interpret the prescription due to potential safety concerns. Please ensure the image contains only prescription information and try again.</p>
+            <h3>Warnings:</h3>
+            {warnings.map((warning, index) => (
+              <p key={index}>{warning}</p>
+            ))}
           </div>
         )}
       </div>
@@ -178,5 +182,4 @@ function ImageUpload() {
     </div>
   );
 }
-
 export default ImageUpload;

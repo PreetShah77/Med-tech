@@ -121,6 +121,13 @@ function Header() {
                     </button>
                   </Link>
                 </li>
+                <li>
+                  <Link to='/therapist' style={{textDecoration: 'none'}}>
+                    <button className='sign-up-btn' style={{color: "#3498db"}}>
+                      Ai Therapist
+                    </button>
+                  </Link>
+                </li>
                 <li></li>
                 <li>
                   <UserButton className="user-button" afterSignOutUrl="/" />
@@ -148,6 +155,13 @@ function Header() {
                       Family Group
                     </button>
                   </Link>
+                  <li>
+                  <Link to='/therapist' style={{textDecoration: 'none'}}>
+                    <button className='sign-up-btn' style={{color: "#3498db"}}>
+                      Ai Therapist
+                    </button>
+                  </Link>
+                </li>
                 </li>
                 <li></li>
                 <li>

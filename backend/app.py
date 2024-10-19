@@ -8,6 +8,7 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
 import re
+import PyPDF2
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -81,6 +82,27 @@ def register_user():
         if connection.is_connected():
             cursor.close()
             connection.close()
+
+def load_banned_drugs():
+    banned_drugs = set()
+    banned_combinations = []
+    pdf_path = 'banned_drugs.pdf'
+    
+    with open(pdf_path, 'rb') as file:
+        pdf_reader = PyPDF2.PdfReader(file)
+        for page in pdf_reader.pages:
+            text = page.extract_text()
+            # Extract individual drugs
+            drugs = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', text)
+            banned_drugs.update(drugs)
+            # Extract drug combinations
+            combinations = re.findall(r'Fixed dose combinations of (.+?)\.', text)
+            banned_combinations.extend(combinations)
+    
+    return banned_drugs, banned_combinations
+
+banned_drugs, banned_combinations = load_banned_drugs()
+
     
 class HealthAdvisor:
     def __init__(self, api_key):
@@ -131,6 +153,74 @@ class HealthAdvisor:
         Keep the response concise and easy to understand.
 
         Important: For each piece of advice or information, provide a citation with a link to a reputable source. Format the citations as [Source: title (link)] at the end of whole statement.
+        """
+
+        try:
+            response = self.model.generate_content(prompt)
+            return self.process_response(response.text)
+        except Exception as e:
+            print(f"Error generating health advice: {e}")
+            return "I'm sorry, I couldn't generate health advice at the moment. Please try again later."
+
+    def process_response(self, text):
+        # Split the text into sentences
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        
+        # Process each sentence to format citations
+        processed_sentences = []
+        for sentence in sentences:
+            match = re.search(r'\[Source: (.*?) \((https?://\S+)\)\]', sentence)
+            if match:
+                title, link = match.groups()
+                formatted_citation = f'[<a href="{link}" target="_blank">{title}</a>]'
+                sentence = re.sub(r'\[Source: .*?\]', formatted_citation, sentence)
+            processed_sentences.append(sentence)
+        
+        # Join the processed sentences back into a single text
+        return ' '.join(processed_sentences)
+    
+class MentalHealth:
+    def __init__(self, api_key):
+        genai.configure(api_key=api_key)
+        
+        generation_config = {
+            "temperature": 0.7,
+            "top_p": 1,
+            "top_k": 32,
+            "max_output_tokens": 4096,
+        }
+        
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+        ]
+        
+        self.model = genai.GenerativeModel(model_name="gemini-1.5-pro",
+                                           generation_config=generation_config,
+                                           safety_settings=safety_settings)
+
+    def get_mentalhealth_advice(self, user_input, conversation_history):
+        prompt = f"""
+        You are an AI-based mental health therapist. Your role is to provide supportive, empathetic responses to users seeking help with mental health issues. Always maintain a professional and caring tone. If a user expresses thoughts of self-harm or suicide, advise them to seek immediate professional help and provide resources like suicide prevention hotlines. Remember that you're not a replacement for a human therapist, but a supportive tool to help users explore their thoughts and feelings.
+
+        Conversation history:
+        {conversation_history}
+
+        User: {user_input}
         """
 
         try:
@@ -221,6 +311,20 @@ class PrescriptionInterpreter:
         print("No text found in any part of the content.")
         return None
         
+    def check_banned_drugs(self, prescription):
+        found_banned = []
+        found_combinations = []
+        
+        for drug in banned_drugs:
+            if drug.lower() in prescription.lower():
+                found_banned.append(drug)
+        
+        for combo in banned_combinations:
+            if all(drug.lower() in prescription.lower() for drug in combo.split(' and ')):
+                found_combinations.append(combo)
+        
+        return found_banned, found_combinations
+
     def interpret_prescription(self, image):
         text = self.extract_text_from_image(image)
         if not text:
@@ -236,20 +340,41 @@ class PrescriptionInterpreter:
         1. Patient Name
         2. Date of Prescription
         3. Medication Name(s)
-        4. Dosage and Instructions
+        4. Dosage and Instructions (Be specific about the proper dosage to be taken during consumption)
         5. Doctor's Name
 
-        Also, for each medication, provide its primary function or purpose.
+        Also, for each medication, provide:
+        - Its primary function or purpose
+        - Proper dosage instructions, including frequency and duration
+        - Any special instructions for consumption (e.g., with food, before bedtime)
+        - Potential side effects to be aware of
 
         If any information is not available or unclear, please indicate so. Remember, this is a medical document and should be treated as such.
         """
 
         try:
             response = self.model.generate_content(prompt)
-            return response.text
+            interpretation = response.text
+            
+            # Check for banned drugs and combinations
+            banned, combinations = self.check_banned_drugs(interpretation)
+            
+            warnings = []
+            if banned:
+                warnings.append(f"Warning: The following banned drugs were found in the prescription: {', '.join(banned)}")
+            if combinations:
+                warnings.append(f"Warning: The following banned drug combinations were found: {', '.join(combinations)}")
+            
+            return {
+                "interpretation": interpretation,
+                "warnings": warnings
+            }
         except Exception as e:
             print(f"Error generating content: {e}")
-            return "Unable to interpret the prescription. Please ensure the image contains clear prescription information."
+            return {
+                "interpretation": "Unable to interpret the prescription. Please ensure the image contains clear prescription information.",
+                "warnings": []
+            }
 
     def compare_medicines(self, prescribed_medicines, inventory_medicines):
         prompt = f"""
@@ -299,9 +424,10 @@ class PrescriptionInterpreter:
             print(f"Error generating Ayurvedic alternatives: {e}")
             return "Unable to suggest Ayurvedic alternatives. Please try again later."
 
-api_key = ""  # Replace with your actual API key
+api_key = "AIzaSyClCe9qvjGi28fI1318nd7z5OseDvc-624"  # Replace with your actual API key
 interpreter = PrescriptionInterpreter(api_key)
 health_advisor = HealthAdvisor(api_key)
+mental_health = MentalHealth(api_key)
 
 from PIL import Image
 import io
@@ -422,9 +548,7 @@ def analyze_health_image():
         }), 500
 @app.route('/interpret', methods=['POST'])
 def interpret_prescription():
-    print("Received request for prescription interpretation")
     if 'image' not in request.files:
-        print("No image file in request")
         return jsonify({'error': 'No image file provided'}), 400
     
     image_file = request.files['image']
@@ -432,27 +556,20 @@ def interpret_prescription():
     user_email = request.form.get('userEmail')
     username = request.form.get('username')
     
-    print(f"Received data - User ID: {user_id}, Email: {user_email}, Name: {username}")
-    
     if not user_id:
-        print("No user ID provided")
         return jsonify({'error': 'User ID is required'}), 400
     
     try:
         image = Image.open(image_file)
-        print("Image opened successfully")
     except Exception as e:
-        print(f"Error opening image: {str(e)}")
         return jsonify({'error': 'Unable to open image file'}), 400
     
     try:
-        interpretation_result = interpreter.interpret_prescription(image)
-        print("Prescription interpreted")
+        result = interpreter.interpret_prescription(image)
         
         # Fetch user's inventory
         connection = create_connection()
         if connection is None:
-            print("Database connection failed")
             return jsonify({'error': 'Database connection failed'}), 500
 
         try:
@@ -460,9 +577,7 @@ def interpret_prescription():
             query = "SELECT name, quantity, expiryDate FROM medicines WHERE userId = %s"
             cursor.execute(query, (user_id,))
             inventory_medicines = cursor.fetchall()
-            print(f"Fetched {len(inventory_medicines)} medicines from inventory")
         except Error as e:
-            print(f"Database error: {str(e)}")
             return jsonify({'error': f'Failed to fetch inventory: {str(e)}'}), 500
         finally:
             if connection.is_connected():
@@ -471,15 +586,14 @@ def interpret_prescription():
 
         # Compare prescribed medicines with inventory
         inventory_text = "\n".join([f"{med['name']} (Quantity: {med['quantity']}, Expires: {med['expiryDate']})" for med in inventory_medicines])
-        comparison_result = interpreter.compare_medicines(interpretation_result, inventory_text)
-        print("Medicines compared with inventory")
+        comparison_result = interpreter.compare_medicines(result['interpretation'], inventory_text)
 
         return jsonify({
-            'prescription_interpretation': interpretation_result,
-            'inventory_comparison': comparison_result
+            'prescription_interpretation': result['interpretation'],
+            'inventory_comparison': comparison_result,
+            'warnings': result['warnings']
         }), 200
     except Exception as e:
-        print(f"Error during interpretation: {str(e)}")
         return jsonify({'error': f'Error during interpretation: {str(e)}'}), 500
 
 
@@ -601,6 +715,28 @@ class MedicineInfoScraper:
             return summarized_desc if summarized_desc else combined_desc
         
         return f"{medicine_name} - Please consult a healthcare professional for detailed information about this medication."
+    
+
+@app.route('/api/chat', methods=['POST'])
+def chat_with_therapist():
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel(model_name="gemini-1.5-pro")
+    chat = model.start_chat(history=[])
+    user_input = request.json.get('message')
+    
+    prompt = f"""
+    You are an AI-based mental health therapist. Your role is to provide supportive, empathetic responses to users seeking help with mental health issues. Always maintain a professional and caring tone. If a user expresses thoughts of self-harm or suicide, advise them to seek immediate professional help and provide resources like suicide prevention hotlines. Remember that you're not a replacement for a human therapist, but a supportive tool to help users explore their thoughts and feelings.
+
+    User: {user_input}
+    Therapist:
+    """
+
+    try:
+        response = chat.send_message(prompt)
+        return jsonify({"response": response.text})
+    except Exception as e:
+        print(f"Error generating response: {e}")
+        return jsonify({"error": "Failed to generate response"}), 500
 
 # Update the global instance of the scraper
 medicine_scraper = MedicineInfoScraper(api_key)
@@ -817,7 +953,7 @@ def search_medicines():
         cursor = connection.cursor(dictionary=True)
         cursor.execute(sql_query, (user_id, name_pattern, desc_pattern))
         results = cursor.fetchall()
-        print(results)
+        
         return jsonify(results), 200
 
     except Exception as e:
@@ -891,6 +1027,24 @@ def chat():
     except Exception as e:
         print(f"Error in chat endpoint: {e}")
         return jsonify({"error": "Failed to generate response"}), 500
+    
+
+@app.route('/mental_chat', methods=['POST'])
+def mentalchat():
+    data = request.json
+    user_input = data.get('message', '')
+    conversation_history = data.get('conversation_history', '')
+
+    if not user_input:
+        return jsonify({'error': 'User input is required'}), 400
+
+    try:
+        response = mental_health.get_mentalhealth_advice(user_input, conversation_history)
+        return jsonify({"response": response}), 200
+    except Exception as e:
+        print(f"Error in chat endpoint: {e}")
+        return jsonify({"error": "Failed to generate response"}), 500
+
     
 
 # New endpoints for family group functionality

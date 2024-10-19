@@ -1,0 +1,87 @@
+.ai-therapist {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: 80vh;
+    background-color: #6467e3;
+    color: white;
+  }
+  
+  .chat-messages {
+    flex: 1;
+    width: 70%;
+    margin-top: 40px;
+    overflow-y: auto;
+  }
+  
+  .message {
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 8px;
+  }
+  
+  .message.user {
+    background-color: #005f73;
+    align-self: flex-end;
+  }
+  
+  .message.bot {
+    background-color: #1a1a2e;
+    align-self: flex-start;
+  }
+  
+  .ai-ball {
+    width: 120px;
+    height: 120px;
+    background-color: #3a0ca3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 0 15px rgba(58, 12, 163, 0.5);
+    margin: 20px;
+    position: relative;
+  }
+  
+  .voice-wave {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .wave {
+    width: 5px;
+    background-color: #f72585;
+    margin: 0 2px;
+    border-radius: 50px;
+  }
+  
+  .input-area {
+    display: flex;
+    width: 70%;
+    margin: 20px 0;
+  }
+  
+  input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    outline: none;
+  }
+  
+  button {
+    padding: 10px;
+    margin-left: 10px;
+    background-color: #3a0ca3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #6a3ad8;
+  }
+  

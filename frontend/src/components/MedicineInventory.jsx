@@ -43,6 +43,7 @@ function MedicineInventory() {
       expiryDate: medicine.expiryDate.split('T')[0] // Format date for input
     });
   };
+
   const handleRefreshDescription = async (medicineId) => {
     try {
       const response = await axios.post(
@@ -66,11 +67,17 @@ function MedicineInventory() {
       return;
     }
     setLoading(true);
+    setError(null);
     try {
       const response = await axios.get('http://localhost:5050/search-medicines', {
         params: { userId: user.id, query: searchQuery }
       });
-      setSearchResults(response.data);
+      if (response.data.length === 0) {
+        // No results found
+        setSearchResults([]);
+      } else {
+        setSearchResults(response.data);
+      }
     } catch (err) {
       console.error('Failed to search medicines:', err);
       setError('Failed to search medicines. Please try again.');
@@ -78,6 +85,7 @@ function MedicineInventory() {
       setLoading(false);
     }
   };
+  
 
   const handleUpdateMedicine = async (e) => {
     e.preventDefault();
@@ -167,6 +175,27 @@ function MedicineInventory() {
           {loading ? 'Searching...' : 'Search'}
         </button>
       </div>
+
+      {/* Display search results */}
+      {searchResults.length > 0 ? (
+  <div className="search-results">
+    <h3>Search Results</h3>
+    {searchResults.map((medicine) => (
+      <div key={medicine.id} className="medicine-item">
+        <h4>{medicine.name}</h4>
+        <p>{medicine.description}</p>
+        <span>Qty: {medicine.quantity}</span>
+        <span>Expires: {new Date(medicine.expiryDate).toLocaleDateString()}</span>
+      </div>
+    ))}
+  </div>
+) : searchQuery && !loading && (
+  <div className="no-results">
+    <h3>No such medicine found</h3>
+  </div>
+)}
+
+
       {expiredMedicines.length > 0 && (
         <div className="expired-medicines-notification">
           <h3>Expired Medicines</h3>
@@ -209,61 +238,61 @@ function MedicineInventory() {
 
       {error && <div className="error-message">{error}</div>}
 
-<div className="medicine-list">
-  <h3>Your Medicines</h3>
-  {medicines.map((medicine) => (
-    <div key={medicine.id} className={`medicine-item ${isExpired(medicine.expiryDate) ? 'expired' : ''}`}>
-      {editingMedicine?.id === medicine.id ? (
-        <form onSubmit={handleUpdateMedicine} className="edit-form">
-          <input
-            type="number"
-            value={editingMedicine.quantity}
-            onChange={(e) => setEditingMedicine({
-              ...editingMedicine,
-              quantity: e.target.value
-            })}
-            placeholder="Quantity"
-            required
-          />
-          <input
-            type="date"
-            value={editingMedicine.expiryDate}
-            onChange={(e) => setEditingMedicine({
-              ...editingMedicine,
-              expiryDate: e.target.value
-            })}
-            required
-          />
-          <button type="submit">Save</button>
-          <button type="button" onClick={() => setEditingMedicine(null)}>Cancel</button>
-        </form>
-      ) : (
-        <>
-        <div className="medicine-info">
-          <h4>{medicine.name}</h4>
-          <MedicineDescription 
-    medicine={medicine}
-    onRefresh={() => handleRefreshDescription(medicine.id)}
-  />
-          <span>Qty: {medicine.quantity}</span>
-          <span>Expires: {new Date(medicine.expiryDate).toLocaleDateString()}</span>
-          {isExpired(medicine.expiryDate) && <span className="expired-label">EXPIRED</span>}
-        </div>
-        <div className="medicine-actions">
-          <button onClick={() => handleEdit(medicine)} className="edit-button">
-            Edit
-          </button>
-          <button onClick={() => handleDelete(medicine.id)} className="delete-button">
-            Delete
-          </button>
-        </div>
-      </>
-    )}
-  </div>
-))}
-</div>
-</div>
-);
+      <div className="medicine-list">
+        <h3>Your Medicines</h3>
+        {medicines.map((medicine) => (
+          <div key={medicine.id} className={`medicine-item ${isExpired(medicine.expiryDate) ? 'expired' : ''}`}>
+            {editingMedicine?.id === medicine.id ? (
+              <form onSubmit={handleUpdateMedicine} className="edit-form">
+                <input
+                  type="number"
+                  value={editingMedicine.quantity}
+                  onChange={(e) => setEditingMedicine({
+                    ...editingMedicine,
+                    quantity: e.target.value
+                  })}
+                  placeholder="Quantity"
+                  required
+                />
+                <input
+                  type="date"
+                  value={editingMedicine.expiryDate}
+                  onChange={(e) => setEditingMedicine({
+                    ...editingMedicine,
+                    expiryDate: e.target.value
+                  })}
+                  required
+                />
+                <button type="submit">Save</button>
+                <button type="button" onClick={() => setEditingMedicine(null)}>Cancel</button>
+              </form>
+            ) : (
+              <>
+                <div className="medicine-info">
+                  <h4>{medicine.name}</h4>
+                  <MedicineDescription 
+                    medicine={medicine}
+                    onRefresh={() => handleRefreshDescription(medicine.id)}
+                  />
+                  <span>Qty: {medicine.quantity}</span>
+                  <span>Expires: {new Date(medicine.expiryDate).toLocaleDateString()}</span>
+                  {isExpired(medicine.expiryDate) && <span className="expired-label">EXPIRED</span>}
+                </div>
+                <div className="medicine-actions">
+                  <button onClick={() => handleEdit(medicine)} className="edit-button">
+                    Edit
+                  </button>
+                  <button onClick={() => handleDelete(medicine.id)} className="delete-button">
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default MedicineInventory;
