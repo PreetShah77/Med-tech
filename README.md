@@ -2,7 +2,7 @@
 
 ---
 
-# Project Name: **AI-driven Healthcare & Mental Health Platform**
+# HealthSync: **AI-driven Healthcare & Mental Health Platform**
 
 ## Overview
 
