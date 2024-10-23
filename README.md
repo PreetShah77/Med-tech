@@ -5,6 +5,91 @@
 This project is a multi-functional healthcare and mental health platform that integrates features like AI-driven mental health therapy, medicine inventory management, prescription interpretation, and medicine information retrieval. Built using Flask (Python) and React.js , this platform leverages Google’s Gemini-1.5 model for generating health and mental health advice, processing prescription data, and suggesting Ayurvedic alternatives to modern medicines.
 
 ---
+### Running the Project
+
+---
+
+#### 1. **Backend (Python - Flask)**
+
+**Requirements:**
+- Python 3.10
+- MySQL server
+
+**Steps:**
+
+1. **Set up Virtual Environment:**
+   - Open a terminal in the backend project directory.
+   - Create a virtual environment:
+     ```bash
+     python -m venv venv
+     ```
+   - Activate the virtual environment:
+     - **Windows**:
+       ```bash
+       venv\Scripts\activate
+       ```
+     - **macOS/Linux**:
+       ```bash
+       source venv/bin/activate
+       ```
+
+2. **Install Dependencies:**
+   - Install the necessary packages listed in the `requirements.txt` file:
+     ```bash
+     pip install -r requirements.txt
+     ```
+
+3. **Configure Environment Variables:**
+   - Set the environment variables such as `API_KEY`, `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`.
+
+4. **Run the Application:**
+   - Start the Flask server:
+     ```bash
+     python app.py
+     ```
+   - The backend will be running at `http://localhost:5050`.
+
+---
+
+#### 2. **Frontend (React - Vite)**
+
+**Requirements:**
+- Node.js 16.x or higher
+
+**Steps:**
+
+1. **Install Dependencies:**
+   - Open a terminal in the frontend project directory.
+   - Run the following command to install the required dependencies:
+     ```bash
+     npm install
+     ```
+
+2. **Running the Development Server:**
+   - To start the frontend development server, use:
+     ```bash
+     npm run dev
+     ```
+   - This will start the Vite server, and the frontend will be accessible at `http://localhost:5173`.
+
+3. **Building for Production:**
+   - To create a production build:
+     ```bash
+     npm run build
+     ```
+
+4. **Preview Production Build:**
+   - After building, you can preview the production build:
+     ```bash
+     npm run preview
+     ```
+
+---
+
+Now both the backend (Flask) and frontend (React) servers should be running concurrently for the full application experience!
+
+---
+
 
 ## Features
 
@@ -102,88 +187,6 @@ This project is a multi-functional healthcare and mental health platform that in
 ---
 
 
-### Running the Project
-
----
-
-#### 1. **Backend (Python - Flask)**
-
-**Requirements:**
-- Python 3.10
-- MySQL server
-
-**Steps:**
-
-1. **Set up Virtual Environment:**
-   - Open a terminal in the backend project directory.
-   - Create a virtual environment:
-     ```bash
-     python -m venv venv
-     ```
-   - Activate the virtual environment:
-     - **Windows**:
-       ```bash
-       venv\Scripts\activate
-       ```
-     - **macOS/Linux**:
-       ```bash
-       source venv/bin/activate
-       ```
-
-2. **Install Dependencies:**
-   - Install the necessary packages listed in the `requirements.txt` file:
-     ```bash
-     pip install -r requirements.txt
-     ```
-
-3. **Configure Environment Variables:**
-   - Set the environment variables such as `API_KEY`, `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`.
-
-4. **Run the Application:**
-   - Start the Flask server:
-     ```bash
-     python app.py
-     ```
-   - The backend will be running at `http://localhost:5050`.
-
----
-
-#### 2. **Frontend (React - Vite)**
-
-**Requirements:**
-- Node.js 16.x or higher
-
-**Steps:**
-
-1. **Install Dependencies:**
-   - Open a terminal in the frontend project directory.
-   - Run the following command to install the required dependencies:
-     ```bash
-     npm install
-     ```
-
-2. **Running the Development Server:**
-   - To start the frontend development server, use:
-     ```bash
-     npm run dev
-     ```
-   - This will start the Vite server, and the frontend will be accessible at `http://localhost:5173`.
-
-3. **Building for Production:**
-   - To create a production build:
-     ```bash
-     npm run build
-     ```
-
-4. **Preview Production Build:**
-   - After building, you can preview the production build:
-     ```bash
-     npm run preview
-     ```
-
----
-
-Now both the backend (Flask) and frontend (React) servers should be running concurrently for the full application experience!
 
 ## Database Schema
 
