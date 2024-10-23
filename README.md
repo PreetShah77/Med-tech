@@ -244,6 +244,22 @@ Now both the backend (Flask) and frontend (React) servers should be running conc
 
 ---
 
+
+## References
+
+1. **Flask Documentation** - [Flask: Web Development](https://flask.palletsprojects.com/)
+2. **React Documentation** - [React: A JavaScript library for building user interfaces](https://reactjs.org/docs/getting-started.html)
+3. **Vite Documentation** - [Vite: Next Generation Frontend Tooling](https://vitejs.dev/guide/)
+4. **MySQL Documentation** - [MySQL: The world's most popular open-source database](https://dev.mysql.com/doc/)
+5. **Google Gemini AI Model** - [Google AI Gemini](https://cloud.google.com/generative-ai)
+6. **Clerk Authentication** - [Clerk: Authentication Made Simple](https://clerk.dev/docs)
+7. **PyPDF2** - [PyPDF2: Python library for PDF operations](https://pypdf2.readthedocs.io/)
+8. **BeautifulSoup** - [BeautifulSoup: Web Scraping with Python](https://www.crummy.com/software/BeautifulSoup/)
+9. **Drugs.com API** - [Drugs.com: Medication Information](https://www.drugs.com/)
+10. **RxNav API** - [RxNav: National Library of Medicine](https://rxnav.nlm.nih.gov/)
+
+---
+
 ## Acknowledgments
 
 - **Google Developers**: For providing access to the Gemini-1.5 model.
