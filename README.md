@@ -1,7 +1,3 @@
-### README
-
----
-
 # HealthSync: **AI-driven Healthcare & Mental Health Platform**
 
 ## Overview
