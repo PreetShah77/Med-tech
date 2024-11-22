@@ -403,7 +403,7 @@ class PrescriptionInterpreter:
             print(f"Error generating Ayurvedic alternatives: {e}")
             return "Unable to suggest Ayurvedic alternatives. Please try again later."
 
-api_key = "AIzaSyAqvkY5a8YtOwe7K-gh6zmYOZXM0yXWwuA"  # Replace with your actual API key
+api_key = ""  # Replace with your actual API key
 interpreter = PrescriptionInterpreter(api_key)
 health_advisor = HealthAdvisor(api_key)
 mental_health = MentalHealth(api_key)
