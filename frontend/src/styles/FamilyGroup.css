@@ -1,0 +1,212 @@
+:root {
+  --primary: #4A90E2;
+  --secondary: #34495E;
+  --success: #2ECC71;
+  --danger: #E74C3C;
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --text-primary: #2C3E50;
+  --text-secondary: #7F8C8D;
+}
+
+.family-group-container {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: var(--surface);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  font-family: 'Inter', sans-serif;
+}
+
+.title {
+  font-size: 2.5rem;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.group-actions {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.group-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.group-form input {
+  padding: 15px;
+  border: 2px solid #E2E8F0;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #F8FAFC;
+}
+
+.group-form input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+  outline: none;
+}
+
+.group-form button {
+  padding: 15px 25px;
+  background: linear-gradient(135deg, var(--primary), #2980b9);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.group-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3);
+}
+
+.group-item {
+  background-color: var(--surface);
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  margin-bottom: 25px;
+  transition: all 0.4s ease;
+  border: 1px solid #E2E8F0;
+}
+
+.group-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+.group-item h4 {
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.group-item p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.invite-form {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+}
+
+.invite-form input {
+  flex: 1;
+  padding: 12px 20px;
+  border: 2px solid #E2E8F0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.invite-form button {
+  padding: 12px 25px;
+  background: linear-gradient(135deg, var(--success), #27AE60);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.member-item, .medicine-item {
+  padding: 20px;
+  background-color: #F8FAFC;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+  border: 1px solid #E2E8F0;
+}
+
+.member-item:hover, .medicine-item:hover {
+  background-color: #EDF2F7;
+  transform: translateX(5px);
+}
+
+.member-item span, .medicine-item span {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.error-message {
+  color: var(--danger);
+  background-color: rgba(231, 76, 60, 0.1);
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 1rem;
+  text-align: center;
+  margin: 15px 0;
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.group-item, .member-item, .medicine-item {
+  animation: fadeIn 0.5s ease forwards;
+}
+.group-actions-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.view-members-btn {
+  background: linear-gradient(135deg, #4CA1AF, #2C3E50);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.view-inventory-btn {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.leave-group-btn {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.group-actions-buttons button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}

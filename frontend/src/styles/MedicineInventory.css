@@ -1,0 +1,193 @@
+.medicine-inventory-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 40px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .main-div {
+    max-width: 80%;
+    margin-left: 10%;
+  }
+  
+  .title {
+    color: #2c3e50;
+    font-size: 28px;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+  
+  .add-medicine-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+  
+  .add-medicine-form input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  .add-medicine-form button {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .add-medicine-form button:hover {
+    background-color: #2980b9;
+  }
+  
+  .error-message {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+  
+  .medicine-list {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 5px;
+  }
+  
+  .medicine-list h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #34495e;
+  }
+  
+  .medicine-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: #ffffff;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .medicine-item span {
+    flex: 1;
+  }
+  
+  .delete-button {
+    padding: 5px 10px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .delete-button:hover {
+    background-color: #c0392b;
+  }
+
+  .expired-medicines-notification {
+    background-color: #ffebee;
+    border: 1px solid #ef9a9a;
+    color: #050607;
+    border-radius: 4px;
+    padding: 15px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 98%;
+
+  }
+  
+  .expired-medicines-notification h3 {
+    color: #c62828;
+    margin-top: 0;
+  }
+  
+  .expired-medicines-notification ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+  
+  .medicine-item.expired {
+    background-color: #fff8e1;
+  }
+  
+  .expired-label {
+    color: #c62828;
+    font-weight: bold;
+    margin-left: 10px;
+  }
+  .medicine-info {
+    flex: 1;
+  }
+  
+  .medicine-description {
+    font-size: 0.9em;
+    color: #666;
+    margin: 5px 0;
+  }
+  
+  .medicine-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .edit-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .edit-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .medicine-item {
+  margin: 15px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  position: relative; /* Needed for absolute positioning of description */
+}
+
+.medicine-info {
+  position: relative;
+}
+
+.medicine-description {
+  display: none; /* Hide by default */
+  position: absolute; /* Position it as needed */
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 10; /* Ensures it appears above other elements */
+}
+
+.medicine-item:hover .medicine-description {
+  display: block; /* Show on hover */
+}
+
+.expired {
+  background-color: #ffe6e6; /* Light red for expired medicines */
+}
+
+.expired-label {
+  color: red;
+  font-weight: bold;
+}
+
+

@@ -1,0 +1,64 @@
+.feature-section {
+    padding: 50px 0;
+    text-align: center;
+    background-color: #ffffff;
+  }
+  
+  .section-title {
+    font-size: 36px;
+    margin-bottom: 40px;
+    color: #333;
+  }
+  
+  .features {
+    display: flex;
+    flex-direction: column; /* Stack images vertically */
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .feature {
+    width: 100%; /* Take up full width */
+    margin-bottom: 30px;
+    opacity: 0; /* Start hidden */
+    transform: translateX(100px); /* Off-screen to the right */
+    transition: transform 0.8s ease, opacity 0.8s ease;
+  }
+  
+  .feature img {
+    width: 100%; /* Image will take up full width of the feature div */
+    height: auto;
+    max-width: 100%; /* Ensure it doesn't stretch beyond its container */
+    object-fit: cover; /* Ensure the image covers the space without distorting */
+    border-radius: 10px;
+  }
+  
+  /* Swipe in animation */
+  .swipe-in {
+    opacity: 1; /* Become visible */
+    transform: translateX(0); /* Swipe into place */
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .feature {
+      transform: translateX(0); /* No horizontal offset on small screens */
+    }
+  }
+  
+  .feature-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .feature-item {
+    height: 200px;
+    background-color: lightgray;
+    padding: 20px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .feature-item.in-view {
+    background-color: lightgreen;
+  }

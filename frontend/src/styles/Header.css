@@ -1,0 +1,77 @@
+header {
+  padding: 0 30px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header ul {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 25px;
+  margin: 0;
+  padding: 0;
+}
+
+header li {
+  list-style: none;
+  display: flex;
+  align-items: center;
+}
+
+header button {
+  background: none;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 10px 20px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap; /* Prevents text wrapping */
+}
+
+header .sign-up-btn {
+  border: 1px solid #13659c;
+  color: #3498db;
+}
+
+header .sign-in-btn {
+  background: #61dafb;
+  color: #3498db;
+}
+
+/* New styles for navigation buttons */
+header .nav-btn {
+  color: #E74C3C;
+  transition: all 0.3s ease;
+}
+
+header .nav-btn:hover {
+  background: #E74C3C;
+}
+
+
+.logo-container {
+  height: 80px;
+  padding: 5px 0;
+  margin-right: auto; /* Pushes logo to the left */
+}
+
+.logo {
+  height: 100%;
+  object-fit: contain;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}

@@ -1,0 +1,289 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+body, html {
+  font-family: 'Inter', sans-serif;
+  background-color: #ffffff;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.title {
+  text-align: center;
+  color: #111827;
+  margin-bottom: 24px;
+  font-size: 1.875rem;
+  font-weight: 600;
+}
+
+.upload-section {
+  margin-bottom: 24px;
+  text-align: center;
+  border: 1px dashed #E5E7EB;
+  border-radius: 8px;
+  padding: 40px 20px;
+  background-color: #ffffff;
+}
+
+.drop-area {
+  margin: 16px auto;
+  padding: 40px 20px;
+  border: 1px dashed #E5E7EB;
+  border-radius: 8px;
+  background-color: #F9FAFB;
+  max-width: 400px;
+}
+
+.drop-area p {
+  color: #6B7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.upload-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.custom-file-upload {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #0066FF;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  transition: background-color 0.2s;
+}
+
+.custom-file-upload:hover {
+  background-color: #0052CC;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.submit-button {
+  background-color: #0066FF;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.submit-button:hover {
+  background-color: #0052CC;
+}
+
+.submit-button:disabled {
+  background-color: #E5E7EB;
+  cursor: not-allowed;
+}
+
+.file-name {
+  color: #6B7280;
+  font-size: 0.875rem;
+  margin-top: 8px;
+}
+
+.result-section {
+  display: grid;
+  grid-template-areas: 
+    "main side"
+    "main-bottom main-bottom";
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.result-column {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s ease;
+}
+
+.result-column.main {
+  grid-area: main;
+}
+
+.result-column.side {
+  grid-area: side;
+  align-self: start;  /* This ensures it stays at the top */
+}
+
+.result-column.main-bottom {
+  grid-area: main-bottom;
+}
+
+.ayurvedic-section {
+  background: #fff8e1;
+  padding: 25px;
+  border-radius: 15px;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ayurvedic-button {
+  background: linear-gradient(135deg, #00b09b, #96c93d);
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+/* Update media query for mobile responsiveness */
+@media (max-width: 768px) {
+  .result-section {
+    grid-template-areas: 
+      "side"
+      "main"
+      "main-bottom";
+    grid-template-columns: 1fr;
+  }
+}
+
+.result-column h3 {
+  color: #2c3e50;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.formatted-prescription {
+  color: #2c3e50;
+  line-height: 1.6;
+}
+
+.prescription-details {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 15px 0;
+}
+
+.medicine-item {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 10px 0;
+  border: 1px solid #e9ecef;
+}
+
+.dosage-info {
+  background: #e8f5e9;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 15px 0;
+  color: #2e7d32;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+
+.warning-message {
+  background: #fff3cd;
+  color: #856404;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 15px 0;
+  border-left: 4px solid #ffc107;
+}
+
+.success-message {
+  background: #d4edda;
+  color: #155724;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 15px 0;
+  border-left: 4px solid #28a745;
+}
+
+@media (max-width: 768px) {
+  .result-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .upload-section {
+    padding: 20px;
+  }
+  
+  .drop-area {
+    padding: 30px 20px;
+  }
+}
+
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content h1 {
+  font-size: 2em;
+  margin-bottom: 0.5em;
+}
+
+.markdown-content h2 {
+  font-size: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.markdown-content h3 {
+  font-size: 1.2em;
+  margin-bottom: 0.5em;
+}
+
+.markdown-content h4 {
+  font-size: 1.1em;
+  margin-bottom: 0.5em;
+}
+
+.markdown-content p {
+  margin-bottom: 1em;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+  margin-left: 2em;
+  margin-bottom: 1em;
+}
+
+.markdown-content li {
+  margin-bottom: 0.5em;
+}
+
+.markdown-content strong {
+  font-weight: bold;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
