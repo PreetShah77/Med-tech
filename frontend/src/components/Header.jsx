@@ -51,8 +51,50 @@ function SignInButton() {
 
 function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [searchIntent, setSearchIntent] = useState('');
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const { user } = useUser();
   const navigate = useNavigate();
+
+  const handleIntentSearch = async () => {
+    try {
+      const response = await fetch('http://localhost:5050/process-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ input: searchIntent })
+      });
+
+      const data = await response.json();
+      
+      // Navigate based on intent
+      switch(data.intent) {
+        case 'inventory':
+          navigate('/inventory');
+          break;
+        case 'prescription':
+          navigate('/image');
+          break;
+        case 'family-group':
+          navigate('/family-group');
+          break;
+        case 'therapist':
+          navigate('/therapist');
+          break;
+        case 'diagnosis':
+          navigate('/'); // Open the diagnosis chat
+          break;
+        default:
+          // Handle unknown intent
+          alert('Could not determine what you want to do. Please try again.');
+      }
+      
+      setSearchIntent(''); // Clear the input
+    } catch (error) {
+      console.error('Error processing intent:', error);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -78,13 +120,9 @@ function Header() {
     }
   }, [user]);
 
-  const handleSOS = () => {
-    navigate('/sos');
-  };
-
   return (
     <header>
-            <Link to="/" className="logo-container">
+      <Link to="/" className="logo-container">
         <img src="/logo.png" alt="Health Advisor Logo" className="logo" />
       </Link>
       <nav>
@@ -100,7 +138,16 @@ function Header() {
         </SignedOut>
 
         <SignedIn>
-          <ul>
+        <div className="intent-search">
+      <input 
+        type="text" 
+        placeholder="What would you like to do?"
+        value={searchIntent}
+        onChange={(e) => setSearchIntent(e.target.value)}
+        onKeyPress={(e) => e.key === 'Enter' && handleIntentSearch()}
+      />
+    </div>
+    <ul>
             {isAdmin ? (
               <>
                 <li>
@@ -157,15 +204,14 @@ function Header() {
                       Family Group
                     </button>
                   </Link>
-                  </li>
-                  <li>
+                </li>
+                <li>
                   <Link to='/therapist' style={{textDecoration: 'none'}}>
                     <button className='sign-up-btn' style={{color: "#3498db"}}>
                       Ai Therapist
                     </button>
                   </Link>
                 </li>
-                
                 <li>
                   <UserButton className="user-button" afterSignOutUrl="/" />
                 </li>

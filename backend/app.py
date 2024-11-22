@@ -403,7 +403,7 @@ class PrescriptionInterpreter:
             print(f"Error generating Ayurvedic alternatives: {e}")
             return "Unable to suggest Ayurvedic alternatives. Please try again later."
 
-api_key = ""  # Replace with your actual API key
+api_key = "AIzaSyAqvkY5a8YtOwe7K-gh6zmYOZXM0yXWwuA"  # Replace with your actual API key
 interpreter = PrescriptionInterpreter(api_key)
 health_advisor = HealthAdvisor(api_key)
 mental_health = MentalHealth(api_key)
@@ -1340,6 +1340,40 @@ def get_user_groups():
         if connection.is_connected():
             cursor.close()
             connection.close()
+
+@app.route('/process-intent', methods=['POST'])
+def process_intent():
+    data = request.json
+    user_input = data.get('input', '')
+
+    prompt = """
+    Analyze the following user input and determine which feature they want to access.
+    Features available:
+    - inventory (for medicine inventory management)
+    - prescription (for prescription analysis)
+    - family-group (for family group management)
+    - therapist (for AI therapy sessions)
+    - diagnosis (for symptom diagnosis)
+
+    Return only one of these exact feature names based on the user's intent.
+
+    User input: {input}
+    """.format(input=user_input)
+
+    try:
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        response = model.generate_content(prompt)
+        intent = response.text.strip().lower()
+        
+        # Validate intent is one of the allowed values
+        valid_intents = ['inventory', 'prescription', 'family-group', 'therapist', 'diagnosis']
+        if intent not in valid_intents:
+            intent = 'unknown'
+            
+        return jsonify({'intent': intent}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5050)

@@ -75,3 +75,88 @@ header .nav-btn:hover {
 .logo:hover {
   transform: scale(1.05);
 }
+.intent-search {
+  margin-right: 20px;
+  flex: 0 1 400px;
+}
+
+.intent-search input {
+  width: 100%;
+  height: 40px;
+  padding: 0 15px;
+  border: 2px solid #3498db;
+  border-radius: 20px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.intent-search input:focus {
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+  border-color: #2980b9;
+}
+
+.intent-search input::placeholder {
+  color: #95a5a6;
+}
+
+/* Update the nav styling */
+header nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.medicine-actions button,
+.edit-form button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.medicine-actions button:first-child {
+  background-color: #3498db;
+  color: white;
+  margin-right: 10px;
+}
+
+.medicine-actions button:first-child:hover {
+  background-color: #2980b9;
+}
+
+.medicine-actions button:last-child {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.medicine-actions button:last-child:hover {
+  background-color: #c0392b;
+}
+
+.edit-form button[type="submit"] {
+  background-color: #2ecc71;
+  color: white;
+  margin-right: 10px;
+}
+
+.edit-form button[type="submit"]:hover {
+  background-color: #27ae60;
+}
+
+.edit-form button[type="button"] {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.edit-form button[type="button"]:hover {
+  background-color: #7f8c8d;
+}
+
+.edit-form input {
+  padding: 8px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  margin-right: 10px;
+}
